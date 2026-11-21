@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Análise de Jogo — Ao Vivo</title>
+<style>
+:root{--bg:#041322;--panel:#071d31;--line:#17466c;--text:#f2f7ff;--muted:#9db7d7;--green:#25df8a;--red:#ff535d}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(ellipse at top,#0b2942,#041322 65%);color:var(--text);font-family:Inter,"Segoe UI",Arial,sans-serif}
+button,input,select,textarea{font:inherit}button{cursor:pointer}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--green);outline-offset:2px}
+header{display:grid;grid-template-columns:minmax(220px,.9fr) minmax(350px,1.4fr) minmax(225px,.7fr) minmax(160px,.5fr);gap:16px;align-items:center;padding:20px 24px;border-bottom:1px solid var(--line);background:#041322f5}
+.brand{display:flex;align-items:center;gap:13px;min-width:0}
+.ball{width:52px;height:52px;flex-shrink:0;border:2px solid var(--green);border-radius:50%;display:grid;place-items:center;font-size:28px;box-shadow:0 0 18px #25df8a25}
+h1{font-size:23px;margin:0 0 5px;letter-spacing:.5px}
+.subtitle{color:#9fc4e9;font-size:12px;letter-spacing:1px}
+.match{width:100%;max-width:680px;margin:auto;display:flex;align-items:center;justify-content:center;gap:10px;border:1px solid var(--line);border-radius:12px;padding:14px;background:#06192b;min-width:0}
+.match input{flex:1;width:0;min-width:0;padding:14px 12px;border:1px solid #244c70;border-radius:7px;background:#eef4fb;color:#132a40;font-weight:700}
+.versus{font-size:23px;font-weight:900}
+.clock{width:100%;max-width:290px;justify-self:center;text-align:center;border:1px solid var(--line);border-radius:12px;padding:12px;background:#06192b}
+.clock strong{display:block;font-size:25px;letter-spacing:2px;margin:4px}
+.clock small{color:var(--muted)}
+.clock-controls{display:flex;gap:5px;justify-content:center;flex-wrap:wrap;margin-top:9px}
+.clock-controls button{border:1px solid var(--line);background:#102e49;color:white;border-radius:6px;padding:7px 8px;font-size:12px}
+.live{display:flex;justify-content:center;align-items:center;gap:9px;width:100%;min-height:56px;border:1px solid var(--line);border-radius:12px;padding:12px;background:#06192b;font-weight:800;letter-spacing:1px}
+.dot{width:11px;height:11px;flex-shrink:0;background:var(--red);border-radius:50%;box-shadow:0 0 12px var(--red)}
+main{padding:20px 24px;display:grid;grid-template-columns:minmax(0,1.12fr) minmax(0,1fr);gap:16px;align-items:start}
+.panel{background:linear-gradient(145deg,#071d31,#05182a);border:1px solid var(--line);border-radius:13px;overflow:hidden;min-width:0}
+.panel-title{display:flex;align-items:center;gap:11px;padding:15px 17px;border-bottom:1px solid var(--line);font-size:17px;font-weight:800}
+.ico{font-size:22px;color:var(--green)}
+.stats-head,.stat-row{display:grid;grid-template-columns:minmax(130px,1.3fr) minmax(0,1fr) minmax(0,1fr);align-items:center}
+.stats-head{background:#0a2943;color:#c7def7;font-size:12px;font-weight:800;letter-spacing:.5px;text-align:center;padding:10px 8px}
+.stats-head div:first-child{text-align:left}
+.stat-row{border-bottom:1px solid #123754;padding:8px 9px;gap:6px}
+.stat-row:last-child{border-bottom:0}
+.stat-name{font-size:13px;display:flex;align-items:center;gap:6px;min-width:0}
+.stat-icon{font-size:18px;width:23px;flex-shrink:0;text-align:center}
+.counter{display:flex;align-items:center;justify-content:center;gap:4px;min-width:0}
+.counter button{width:27px;height:32px;flex-shrink:0;border:1px solid #20547b;border-radius:6px;background:#0b2a44;color:#dcecff;font-size:18px}
+.counter input{width:39px;min-width:0;text-align:center;border:1px solid #20547b;background:#031526;color:white;border-radius:6px;padding:7px 1px;font-weight:800}
+.midcol{display:grid;gap:16px;min-width:0}
+.form-grid{padding:14px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.field{min-width:0}
+.field label{display:block;font-size:13px;color:#c6dcf5;margin-bottom:7px;font-weight:700}
+.field input,.field select,.field textarea{width:100%;min-width:0;border:1px solid #20547b;border-radius:8px;background:#04182a;color:#f3f8ff;padding:11px;outline:none}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--green);box-shadow:0 0 0 2px #25df8a18}
+.field textarea{resize:vertical;min-height:105px;line-height:1.5}
+.full{grid-column:1/-1}
+.patterns{padding:12px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.team-pattern-column{min-width:0;border:1px solid var(--line);border-radius:10px;padding:10px;background:#04182a}
+.team-pattern-column h3{margin:2px 0 10px;font-size:14px;color:var(--green);text-align:center}
+.team-pattern-buttons{display:grid;grid-template-columns:1fr;gap:7px}
+.pattern-btn{display:flex;align-items:center;gap:9px;width:100%;text-align:left;padding:9px;border:1px solid #1b4b71;border-radius:8px;background:linear-gradient(100deg,#0a2943,#071c30);color:#edf6ff;transition:.15s}
+.pattern-btn:hover{border-color:#3d9fff}
+.pattern-btn.active{border-color:var(--green);background:#0c3a37}
+.pico{width:29px;height:29px;flex-shrink:0;border-radius:50%;display:grid;place-items:center;background:#123d5c;font-size:16px}
+.pattern-btn small{display:block;color:var(--muted);margin-top:3px;font-size:10px}
+.pattern-log{padding:0 12px 12px}
+.pattern-log h3{font-size:13px;color:#a9c6e5;margin:7px 0}
+.pattern-item{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px;margin-top:6px;border:1px solid #194565;border-radius:7px;background:#06192a;font-size:12px}
+.pattern-item button{background:transparent;border:0;color:#ff8e95;font-size:20px}
+.patterns-panel,.bottom,.actions{grid-column:1/-1}
+.bottom{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.actions{display:flex;gap:10px;flex-wrap:wrap}
+.actions button{flex:1;min-width:145px;padding:13px 15px;border-radius:9px;border:1px solid #2474a8;background:#061b2e;color:white;font-weight:800}
+.actions .primary{background:linear-gradient(90deg,#20c878,#32e79a);color:#042b25;border:0}
+.actions .danger{border-color:#7d3944;color:#ffb8bd}
+.status{color:var(--muted);font-size:12px;align-self:center}
+footer{padding:0 24px 22px;color:#75eab7;font-weight:700;text-align:right;font-style:italic}
+
+/* RELATÓRIO PROFISSIONAL EM JANELA, SEM SUBSTITUIR A TELA DE REGISTRO */
+.report-modal{display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,8,18,.9);padding:20px;overflow-y:auto}
+.report-modal.open{display:block}
+.report-toolbar{max-width:1000px;margin:0 auto 14px;display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap}
+.report-toolbar button{padding:11px 17px;border:1px solid #2474a8;border-radius:8px;background:#09243b;color:white;font-weight:700}
+.report-paper{max-width:1000px;margin:auto;padding:35px;background:#fff;color:#172b40;border-radius:10px;font-family:Arial,sans-serif;line-height:1.55}
+.report-header{background:#071d31;color:white;padding:25px;border-bottom:5px solid #25df8a;border-radius:7px}
+.report-header h2{margin:0;font-size:25px}
+.report-subtitle{color:#a9c6e5;font-size:12px;letter-spacing:1px}
+.report-score{display:grid;grid-template-columns:1fr auto 1fr;gap:18px;align-items:center;text-align:center;margin-top:25px}
+.report-score strong{font-size:22px;overflow-wrap:anywhere}
+.report-section{margin-top:25px;break-inside:avoid}
+.report-section h3{padding:10px 12px;background:#eaf3f9;border-left:5px solid #18b978;color:#0b2942;font-size:16px}
+.report-table{width:100%;border-collapse:collapse;font-size:13px}
+.report-table th,.report-table td{border:1px solid #d8e2ea;padding:9px;text-align:left;overflow-wrap:anywhere}
+.report-table th{background:#0b2942;color:white}
+.report-table tbody tr:nth-child(even){background:#f2f7fb}
+.report-text{white-space:pre-wrap;overflow-wrap:anywhere;padding:12px;border:1px solid #d8e2ea;border-radius:6px;min-height:35px}
+.report-footer{margin-top:30px;padding-top:12px;border-top:1px solid #ccd8e2;color:#52687b;font-size:11px;text-align:center}
+@media(max-width:1350px){header{grid-template-columns:minmax(210px,.8fr) minmax(320px,1.2fr) minmax(220px,.7fr)}.live{grid-column:1/-1;min-height:42px}}
+@media(max-width:1050px){header{grid-template-columns:repeat(2,minmax(0,1fr))}.brand{grid-column:1/-1}.match{max-width:none}.clock{max-width:none}.live{grid-column:auto}main{grid-template-columns:repeat(2,minmax(0,1fr))}.patterns-panel,.bottom,.actions{grid-column:1/-1}}
+@media(max-width:700px){header{grid-template-columns:minmax(0,1fr);padding:14px}.brand,.match,.clock,.live{grid-column:auto;width:100%;max-width:none}main{padding:12px;grid-template-columns:minmax(0,1fr)}.patterns-panel,.bottom,.actions{grid-column:1}.bottom{grid-template-columns:minmax(0,1fr)}.patterns{grid-template-columns:minmax(0,1fr)}.stats-head,.stat-row{grid-template-columns:minmax(110px,1.2fr) minmax(0,1fr) minmax(0,1fr)}.stat-row{gap:3px;padding:7px 5px}.stat-name{font-size:12px;gap:3px}.stat-icon{width:19px;font-size:16px}.counter{gap:2px}.counter button{width:24px}.counter input{width:30px}.panel-title{font-size:15px}.actions{display:grid;grid-template-columns:minmax(0,1fr)}footer{text-align:center}.report-paper{padding:16px}.report-header{padding:17px}.report-header h2{font-size:20px}.report-score{gap:8px}.report-score strong{font-size:17px}}
+@media(max-width:390px){h1{font-size:20px}.subtitle{font-size:10px;letter-spacing:.4px}.match{gap:5px;padding:9px}.match input{padding:11px 7px}.form-grid{grid-template-columns:minmax(0,1fr);padding:11px}.field.full{grid-column:auto}.stats-head{font-size:10px;letter-spacing:0}.counter button{width:21px}.counter input{width:26px}}
+@media print{
+  body.report-print *{visibility:hidden!important}
+  body.report-print #reportModal,body.report-print #reportModal *{visibility:visible!important}
+  body.report-print #reportModal{display:block!important;position:absolute;inset:0;padding:0;overflow:visible;background:white}
+  body.report-print .report-toolbar{display:none!important}
+  body.report-print .report-paper{max-width:none;margin:0;padding:10mm;border-radius:0}
+  body.report-print .report-section{break-inside:avoid}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand"><div class="ball">⚽</div><div><h1>ANÁLISE DE JOGO</h1><div class="subtitle">REGISTRO E ACOMPANHAMENTO AO VIVO</div></div></div>
+  <div class="match"><input id="teamA" placeholder="Time A" aria-label="Nome do Time A"><span class="versus">X</span><input id="teamB" placeholder="Time B" aria-label="Nome do Time B"></div>
+  <div class="clock"><small>⏱ TEMPO DE JOGO</small><strong id="clock">00:00</strong><small id="periodLabel">1º TEMPO</small><div class="clock-controls"><button id="startClock" type="button">▶ Iniciar</button><button id="pauseClock" type="button">Ⅱ Pausar</button><button id="resetClock" type="button">↺ Zerar</button><button id="periodBtn" type="button">2º tempo</button></div></div>
+  <div class="live"><span class="dot"></span> AO VIVO</div>
+</header>
+
+<main>
+  <section class="panel">
+    <div class="panel-title"><span class="ico">▥</span> ESTATÍSTICAS DO JOGO</div>
+    <div class="stats-head"><div>ESTATÍSTICA</div><div id="headA">TIME A</div><div id="headB">TIME B</div></div>
+    <div id="stats"></div>
+  </section>
+
+  <div class="midcol">
+    <section class="panel">
+      <div class="panel-title"><span class="ico">▦</span> DESCRITIVO TÁTICO</div>
+      <div class="form-grid">
+        <div class="field"><label for="formationA">Esquema tático — Time A</label><select id="formationA"><option value="">Selecione</option><option>4-4-2</option><option>4-3-3</option><option>4-2-3-1</option><option>3-5-2</option><option>3-4-3</option><option>4-1-4-1</option><option>5-3-2</option><option>Outro / variável</option></select></div>
+        <div class="field"><label for="formationB">Esquema tático — Time B</label><select id="formationB"><option value="">Selecione</option><option>4-4-2</option><option>4-3-3</option><option>4-2-3-1</option><option>3-5-2</option><option>3-4-3</option><option>4-1-4-1</option><option>5-3-2</option><option>Outro / variável</option></select></div>
+        <div class="field"><label for="observationA">Observação do Time A</label><textarea id="observationA" placeholder="Padrões, jogadas ensaiadas, comportamentos táticos e ajustes do Time A..."></textarea></div>
+        <div class="field"><label for="observationB">Observação do Time B</label><textarea id="observationB" placeholder="Padrões, jogadas ensaiadas, comportamentos táticos e ajustes do Time B..."></textarea></div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-title"><span class="ico">▤</span> PADRÕES IDENTIFICADOS / NOTAS</div>
+      <div class="form-grid">
+        <div class="field full"><label for="patternsNotes">Descrição dos padrões, frequência e contexto</label><textarea id="patternsNotes" placeholder="Ex.: Time A inicia curto com zagueiros; quando pressionado, goleiro busca o centroavante. Time B progride pela direita e tenta cruzamentos..."></textarea></div>
+        <div class="field"><label for="minuteNote">Minuto da observação</label><input id="minuteNote" placeholder="Ex.: 23'"></div>
+        <div class="field"><label for="teamNote">Equipe relacionada</label><select id="teamNote"><option>Ambos os times</option><option>Time A</option><option>Time B</option></select></div>
+      </div>
+    </section>
+  </div>
+
+  <section class="panel patterns-panel">
+    <div class="panel-title"><span class="ico">⟳</span> PADRÕES DE JOGO</div>
+    <div class="patterns">
+      <div class="team-pattern-column"><h3 id="patternsTitleA">TIME A</h3><div class="team-pattern-buttons" id="patternButtonsA"></div></div>
+      <div class="team-pattern-column"><h3 id="patternsTitleB">TIME B</h3><div class="team-pattern-buttons" id="patternButtonsB"></div></div>
+    </div>
+    <div class="pattern-log"><h3>REGISTRO DE PADRÕES</h3><div id="patternLog"><div class="status">Clique em um padrão para registrar uma ocorrência.</div></div></div>
+  </section>
+
+  <section class="bottom">
+    <section class="panel"><div class="panel-title"><span class="ico">✎</span> ANOTAÇÕES RÁPIDAS</div><div class="form-grid"><div class="field full"><label for="quickNote">Registrar acontecimento pontual</label><textarea id="quickNote" placeholder="Ex.: 18' — Time B recupera a bola no corredor central e finaliza após transição rápida."></textarea></div></div></section>
+    <section class="panel"><div class="panel-title"><span class="ico">▣</span> RELATÓRIO PRONTO PARA COPIAR</div><div class="form-grid"><div class="field full"><label for="reportPreview">Relatório textual</label><textarea id="reportPreview" readonly placeholder="Clique em Gerar relatório para organizar as informações..."></textarea></div></div></section>
+  </section>
+
+  <div class="actions">
+    <button class="danger" id="clearBtn" type="button">↺ LIMPAR CAMPOS</button>
+    <button class="primary" id="saveBtn" type="button">▣ SALVAR AGORA</button>
+    <button id="reportBtn" type="button">☷ GERAR RELATÓRIO PROFISSIONAL</button>
+    <button id="copyBtn" type="button">▢ COPIAR TEXTO</button>
+    <button id="downloadBtn" type="button">⬇ BAIXAR TXT</button>
+    <button id="printBtn" type="button">⎙ IMPRIMIR / PDF</button>
+    <span class="status" id="status" role="status">Pronto para iniciar.</span>
+  </div>
+</main>
+
+<footer>⚽ Bons dados geram melhores análises!</footer>
+
+<!-- A janela do relatório fica separada da tela de registro -->
+<div id="reportModal" class="report-modal" aria-modal="true" role="dialog" aria-label="Relatório profissional">
+  <div class="report-toolbar">
+    <button type="button" id="closeReport">← Voltar ao jogo</button>
+    <button type="button" id="copyPrettyReport">▢ Copiar relatório</button>
+    <button type="button" id="printPrettyReport">⎙ Imprimir / PDF</button>
+  </div>
+  <article id="reportPaper" class="report-paper"></article>
+</div>
+
+<script>
+"use strict";
+const $=id=>document.getElementById(id);
+const statDefs=[["Chutes no gol","🎯"],["Chutes pra fora","◎"],["Faltas cometidas","⚑"],["Faltas concedidas","↙"],["Gols","⚽"],["Escanteios","⚑"],["Entrada no último terço","↑"]];
+const statsRoot=$("stats");
+
+statDefs.forEach((stat,i)=>{
+  const row=document.createElement("div");row.className="stat-row";
+  row.innerHTML=`<div class="stat-name"><span class="stat-icon">${stat[1]}</span>${stat[0]}</div>
+  ${["A","B"].map(team=>`<div class="counter"><button type="button" data-step="-1" aria-label="Diminuir">−</button><input type="number" min="0" step="1" value="0" id="stat${i}${team}" aria-label="${stat[0]} Time ${team}"><button type="button" data-step="1" aria-label="Aumentar">+</button></div>`).join("")}`;
+  statsRoot.appendChild(row);
+  row.querySelectorAll(".counter").forEach(counter=>{
+    const input=counter.querySelector("input");
+    counter.querySelectorAll("button").forEach(button=>button.addEventListener("click",()=>{
+      input.value=Math.max(0,(parseInt(input.value,10)||0)+Number(button.dataset.step));saveAutomatically();
+    }));
+    input.addEventListener("change",()=>{input.value=Math.max(0,parseInt(input.value,10)||0);saveAutomatically()});
+  });
+});
+
+const patternDefs=[
+["Saída de bola curta","⚽"],["Saída de bola longa","↗"],["Construção desde a defesa","▤"],["Passes laterais","↔"],["Ataque pela lateral","📊"],["Ataque pelo centro","🎯"],["Inversão de corredor","↔"],["Exploração das costas da defesa","➚"],["Ultrapassagem do lateral","↗"],["Transição ofensiva — lançamento","➚"],["Transição ofensiva — passes","➶"],["Transição defensiva","⬟"],["Pressão alta","↑"],["Pressão após perda","⚡"],["Bloco defensivo médio","▥"],["Bloco defensivo baixo","▤"],["Marcação individual","👤"],["Superioridade numérica","＋"],["Disputa da segunda bola","⚔"],["Bolas paradas","⚑"],["Escanteio curto","↪"],["Falta lateral ensaiada","⚑"],["Outro padrão","✚"]
+];
+let patternEvents=[];
+let timer=null,seconds=0,period=1,lastSaved="",saveTimer=null;
+
+function getTeamName(team){return $(team==="A"?"teamA":"teamB").value.trim()||"Time "+team}
+function clockText(){return String(Math.floor(seconds/60)).padStart(2,"0")+":"+String(seconds%60).padStart(2,"0")}
+function showClock(){$("clock").textContent=clockText()}
+function updateTeamLabels(){
+  $("headA").textContent=getTeamName("A").toUpperCase();$("headB").textContent=getTeamName("B").toUpperCase();
+  $("patternsTitleA").textContent=getTeamName("A").toUpperCase();$("patternsTitleB").textContent=getTeamName("B").toUpperCase();
+}
+function renderPatterns(){
+  const root=$("patternLog");root.replaceChildren();
+  if(!patternEvents.length){const message=document.createElement("div");message.className="status";message.textContent="Clique em um padrão para registrar uma ocorrência.";root.appendChild(message);return}
+  [...patternEvents].reverse().forEach((event,reverseIndex)=>{
+    const realIndex=patternEvents.length-1-reverseIndex,item=document.createElement("div");item.className="pattern-item";
+    const text=document.createElement("span");text.textContent=`${event.minute} · ${event.period||""} · ${event.team} — ${event.label}`;
+    const remove=document.createElement("button");remove.type="button";remove.textContent="×";remove.title="Remover ocorrência";remove.setAttribute("aria-label","Remover ocorrência");
+    remove.addEventListener("click",()=>{patternEvents.splice(realIndex,1);renderPatterns();saveAutomatically()});
+    item.append(text,remove);root.appendChild(item);
+  });
+}
+function addPatternButtons(root,team){
+  patternDefs.forEach(([label,icon])=>{
+    const button=document.createElement("button");button.type="button";button.className="pattern-btn";
+    const ico=document.createElement("span");ico.className="pico";ico.textContent=icon;
+    const description=document.createElement("span");description.append(document.createTextNode(label));
+    const small=document.createElement("small");small.textContent="Registrar ocorrência";description.appendChild(small);
+    button.append(ico,description);
+    button.addEventListener("click",()=>{
+      patternEvents.push({label,team:getTeamName(team),minute:$("minuteNote").value.trim()||clockText(),period:$("periodLabel").textContent});
+      renderPatterns();button.classList.add("active");setTimeout(()=>button.classList.remove("active"),250);saveAutomatically();
+    });
+    root.appendChild(button);
+  });
+}
+addPatternButtons($("patternButtonsA"),"A");addPatternButtons($("patternButtonsB"),"B");
+
+function pauseClock(){if(timer!==null){clearInterval(timer);timer=null}}
+$("startClock").addEventListener("click",()=>{
+  if(timer===null){timer=setInterval(()=>{seconds++;showClock();saveAutomatically()},1000);$("status").textContent="Cronômetro em andamento."}
+});
+$("pauseClock").addEventListener("click",()=>{pauseClock();$("status").textContent="Cronômetro pausado.";saveAutomatically()});
+$("resetClock").addEventListener("click",()=>{pauseClock();seconds=0;showClock();saveAutomatically();$("status").textContent="Cronômetro zerado."});
+$("periodBtn").addEventListener("click",()=>{
+  pauseClock();period=period===1?2:1;seconds=0;showClock();$("periodLabel").textContent=period+"º TEMPO";
+  $("periodBtn").textContent=period===1?"2º tempo":"1º tempo";$("status").textContent="Período alterado. Cronômetro pausado e zerado.";saveAutomatically();
+});
+$("teamA").addEventListener("input",()=>{updateTeamLabels();scheduleSave()});
+$("teamB").addEventListener("input",()=>{updateTeamLabels();scheduleSave()});
+
+function allFields(){return [...document.querySelectorAll("input,select,textarea")].filter(el=>!el.readOnly)}
+function collectData(){return {fields:allFields().map(el=>({id:el.id,value:el.value})),patternEvents,seconds,period}}
+function saveAutomatically(){
+  try{const data=JSON.stringify(collectData());localStorage.setItem("analiseJogoAoVivo",data);lastSaved=data}
+  catch(error){$("status").textContent="Não foi possível salvar neste navegador."}
+}
+function scheduleSave(){clearTimeout(saveTimer);saveTimer=setTimeout(saveAutomatically,300)}
+allFields().forEach(el=>{el.addEventListener("input",scheduleSave);el.addEventListener("change",scheduleSave)});
+$("saveBtn").addEventListener("click",()=>{saveAutomatically();$("status").textContent="Dados salvos neste navegador."});
+
+function loadSaved(){
+  try{
+    const data=JSON.parse(localStorage.getItem("analiseJogoAoVivo")||"null");if(!data)return;
+    (data.fields||[]).forEach(field=>{const element=$(field.id);if(element)element.value=field.value});
+    patternEvents=data.patternEvents||[];seconds=Math.max(0,Number(data.seconds)||0);period=data.period===2?2:1;
+    showClock();$("periodLabel").textContent=period+"º TEMPO";$("periodBtn").textContent=period===1?"2º tempo":"1º tempo";
+    updateTeamLabels();renderPatterns();lastSaved=JSON.stringify(collectData());$("status").textContent="Dados anteriores recuperados.";
+  }catch(error){$("status").textContent="Não foi possível recuperar os dados salvos."}
+}
+
+function generateReport(){
+  const a=getTeamName("A"),b=getTeamName("B");
+  const lines=["RELATÓRIO DE ANÁLISE DE JOGO — AO VIVO","Partida: "+a+" x "+b,"Período: "+$("periodLabel").textContent,"Cronômetro: "+clockText(),"","1. ESTATÍSTICAS DO JOGO"];
+  statDefs.forEach((stat,i)=>lines.push(`${stat[0]}: ${a} ${$("stat"+i+"A").value||0} | ${b} ${$("stat"+i+"B").value||0}`));
+  lines.push("","2. ESQUEMAS TÁTICOS",`${a}: ${$("formationA").value||"Não informado"}`,`${b}: ${$("formationB").value||"Não informado"}`,"","3. OBSERVAÇÃO DO TIME A",$("observationA").value||"Não informado","","4. OBSERVAÇÃO DO TIME B",$("observationB").value||"Não informado","","5. PADRÕES DE JOGO");
+  lines.push(patternEvents.length?patternEvents.map(p=>`- ${p.minute} | ${p.period||""} | ${p.team} | ${p.label}`).join("\n"):"Nenhum padrão registrado.");
+  lines.push("","6. DESCRIÇÃO DOS PADRÕES",$("patternsNotes").value||"Não informado","Minuto de referência: "+($("minuteNote").value||"Não informado"),"Equipe relacionada: "+$("teamNote").value,"","7. ANOTAÇÕES RÁPIDAS",$("quickNote").value||"Não informado","","Relatório gerado pelo sistema Análise de Jogo.");
+  $("reportPreview").value=lines.join("\n");saveAutomatically();return lines.join("\n");
+}
+
+/* Relatório profissional: gera uma visualização separada, sem limpar nem trocar os campos atuais. */
+function escapeReport(value){
+  return String(value??"").replace(/[&<>"']/g,char=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[char]));
+}
+function reportText(value){return escapeReport(value||"Não informado").replace(/\n/g,"<br>")}
+function buildProfessionalReport(){
+  const a=getTeamName("A"),b=getTeamName("B");
+  const statsRows=statDefs.map((stat,i)=>`<tr><td>${escapeReport(stat[0])}</td><td>${escapeReport($("stat"+i+"A").value||"0")}</td><td>${escapeReport($("stat"+i+"B").value||"0")}</td></tr>`).join("");
+  const patterns=patternEvents.length?patternEvents.map(event=>`<tr><td>${escapeReport(event.minute)}</td><td>${escapeReport(event.period||"")}</td><td>${escapeReport(event.team)}</td><td>${escapeReport(event.label)}</td></tr>`).join(""):`<tr><td colspan="4">Nenhum padrão registrado.</td></tr>`;
+  $("reportPaper").innerHTML=`
+    <div class="report-header">
+      <div class="report-subtitle">SCOUTING · ANÁLISE DE DESEMPENHO</div>
+      <h2>RELATÓRIO DE ANÁLISE DE JOGO</h2>
+      <div class="report-subtitle">REGISTRO E ACOMPANHAMENTO DA PARTIDA</div>
+      <div class="report-score">
+        <strong>${escapeReport(a)}</strong>
+        <div><strong>${escapeReport($("stat4A").value||"0")} × ${escapeReport($("stat4B").value||"0")}</strong>
+        <div>${escapeReport($("periodLabel").textContent)}</div><div>${escapeReport($("clock").textContent)}</div></div>
+        <strong>${escapeReport(b)}</strong>
+      </div>
+    </div>
+    <section class="report-section"><h3>01 · Estatísticas da partida</h3>
+      <table class="report-table"><thead><tr><th>Estatística</th><th>${escapeReport(a)}</th><th>${escapeReport(b)}</th></tr></thead><tbody>${statsRows}</tbody></table>
+    </section>
+    <section class="report-section"><h3>02 · Organização tática</h3>
+      <table class="report-table"><thead><tr><th>Equipe</th><th>Esquema tático</th></tr></thead><tbody>
+      <tr><td>${escapeReport(a)}</td><td>${escapeReport($("formationA").value||"Não informado")}</td></tr>
+      <tr><td>${escapeReport(b)}</td><td>${escapeReport($("formationB").value||"Não informado")}</td></tr></tbody></table>
+    </section>
+    <section class="report-section"><h3>03 · Observações táticas</h3>
+      <h4>${escapeReport(a)}</h4><div class="report-text">${reportText($("observationA").value)}</div>
+      <h4>${escapeReport(b)}</h4><div class="report-text">${reportText($("observationB").value)}</div>
+    </section>
+    <section class="report-section"><h3>04 · Registro de padrões de jogo</h3>
+      <table class="report-table"><thead><tr><th>Minuto</th><th>Período</th><th>Equipe</th><th>Padrão identificado</th></tr></thead><tbody>${patterns}</tbody></table>
+    </section>
+    <section class="report-section"><h3>05 · Análise e contexto dos padrões</h3>
+      <div class="report-text">${reportText($("patternsNotes").value)}</div>
+      <p><strong>Minuto de referência:</strong> ${escapeReport($("minuteNote").value||"Não informado")}</p>
+      <p><strong>Equipe relacionada:</strong> ${escapeReport($("teamNote").value)}</p>
+    </section>
+    <section class="report-section"><h3>06 · Anotações rápidas</h3><div class="report-text">${reportText($("quickNote").value)}</div></section>
+    <div class="report-footer">Relatório gerado pelo sistema Análise de Jogo · Documento de apoio à análise de desempenho</div>`;
+  generateReport();
+  $("reportModal").classList.add("open");
+  $("closeReport").focus();
+}
+$("reportBtn").addEventListener("click",buildProfessionalReport);
+$("closeReport").addEventListener("click",()=>{$("reportModal").classList.remove("open");document.body.classList.remove("report-print")});
+$("reportModal").addEventListener("click",event=>{if(event.target===$("reportModal"))$("reportModal").classList.remove("open")});
+document.addEventListener("keydown",event=>{if(event.key==="Escape")$("reportModal").classList.remove("open")});
+
+async function copyText(text){
+  try{await navigator.clipboard.writeText(text);return true}
+  catch(error){
+    const area=document.createElement("textarea");area.value=text;document.body.appendChild(area);area.select();
+    let success=false;try{success=document.execCommand("copy")}catch(e){}
+    area.remove();return success;
+  }
+}
+$("copyBtn").addEventListener("click",async()=>{
+  const ok=await copyText(generateReport());
+  $("status").textContent=ok?"Relatório textual copiado.":"Não foi possível copiar automaticamente.";
+});
+$("copyPrettyReport").addEventListener("click",async()=>{
+  const ok=await copyText($("reportPaper").innerText);
+  $("status").textContent=ok?"Relatório profissional copiado!":"Não foi possível copiar automaticamente.";
+});
+$("downloadBtn").addEventListener("click",()=>{
+  const blob=new Blob(["\uFEFF"+generateReport()],{type:"text/plain;charset=utf-8"});
+  const url=URL.createObjectURL(blob),link=document.createElement("a");
+  link.href=url;link.download="relatorio_analise_"+new Date().toISOString().slice(0,10)+".txt";
+  document.body.appendChild(link);link.click();link.remove();URL.revokeObjectURL(url);
+  $("status").textContent="Arquivo TXT preparado para baixar.";
+});
+function printProfessional(){
+  document.body.classList.add("report-print");
+  const cleanup=()=>{document.body.classList.remove("report-print");window.removeEventListener("afterprint",cleanup)};
+  window.addEventListener("afterprint",cleanup);window.print();
+}
+$("printPrettyReport").addEventListener("click",printProfessional);
+$("printBtn").addEventListener("click",()=>{buildProfessionalReport();printProfessional()});
+
+$("clearBtn").addEventListener("click",()=>{
+  if(!confirm("Tem certeza que deseja limpar os campos e os contadores?"))return;
+  pauseClock();
+  allFields().forEach(el=>{if(el.tagName==="SELECT")el.selectedIndex=0;else el.value=el.type==="number"?"0":""});
+  patternEvents=[];seconds=0;period=1;showClock();$("periodLabel").textContent="1º TEMPO";$("periodBtn").textContent="2º tempo";
+  $("reportPreview").value="";updateTeamLabels();renderPatterns();$("reportModal").classList.remove("open");
+  try{localStorage.removeItem("analiseJogoAoVivo");lastSaved=""}catch(error){}
+  $("status").textContent="Campos limpos.";
+});
+
+window.addEventListener("beforeunload",()=>{
+  try{if(JSON.stringify(collectData())!==lastSaved)saveAutomatically()}catch(error){}
+});
+loadSaved();showClock();updateTeamLabels();
+</script>
+</body>
+</html>
